@@ -10,7 +10,11 @@ public class ModeloDeporte {
 	public ModeloDeporte(String nombre) {
 		this.nombreDeporte = nombre;
 	}
-	
+
+	public ModeloDeporte() {
+
+	}
+
 
 	public String getNombreDeporte() {
 		return nombreDeporte;
