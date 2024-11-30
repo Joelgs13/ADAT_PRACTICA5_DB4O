@@ -52,13 +52,32 @@ public class MenuOlimpiadas {
             opcion = scanner.nextInt();
             scanner.nextLine();
 
+            switch (opcion){
+                case 1:
+                    listar(scanner,bbdd);
+                    break;
+                case 2:
+                    break;
+                case 3:
+                    break;
+                case 4:
+                    break;
+                case 0:
+                    System.out.print("Terminando programa");
+                    break;
+                default:
+                    break;
+            }
+
         } while (opcion!=0);
+
+
     }
 
     public static void cargarDatos(File ruta,ObjectContainer db) {
         try (CSVReader reader = new CSVReader(new FileReader(ruta))) {
             List<String[]> lineas = reader.readAll();
-            lineas.remove(0); // Remover cabecera
+            lineas.removeFirst(); // Remover cabecera
             for (String[] linea : lineas) {
                 ModeloDeporte deporte= DaoDeporte.conseguirPorNombre(linea[12],db);
                 if(deporte==null) {
@@ -133,4 +152,75 @@ public class MenuOlimpiadas {
         }
     }
 
+    private static void listar(Scanner input, ObjectContainer db) {
+        int resp=0;
+        String temporada="Summer";
+        do {
+            System.out.println("Dime la temporada:\n1 Winter\n2 Summer");
+            resp=input.nextInt();
+            input.nextLine();
+        }while(resp!=1&&resp!=2);
+        if(resp==1) {
+            temporada="Winter";
+        }
+        List<ModeloOlimpiada> olimpiadas=DaoOlimpiada.conseguirPorTemporada(temporada, db);
+        do {
+            System.out.println("Elige la edición olímpica:");
+            for(int i=0;i<olimpiadas.size();i++) {
+                System.out.println((i+1)+" "+olimpiadas.get(i).getNombreOlimpiada());
+            }
+            resp=input.nextInt();
+            input.nextLine();
+        }while(resp<1||resp>olimpiadas.size());
+        ModeloOlimpiada olimpiada=olimpiadas.get(resp-1);
+        List<ModeloEvento> eventos=DaoEvento.conseguirPorOlimpiada(olimpiada, db);
+        if(eventos.size()==0) {
+            System.out.println("No hay deportes en esa olimpiada");
+        }else {
+            ArrayList<ModeloDeporte> deportesDisponibles=new ArrayList<ModeloDeporte>();
+            for(ModeloEvento e:eventos) {
+                if(!deportesDisponibles.contains(e.getDeporte())) {
+                    deportesDisponibles.add(e.getDeporte());
+                }
+            }
+            do {
+                System.out.println("Elige el deporte");
+                for(int i=0;i<deportesDisponibles.size();i++) {
+                    System.out.println((i+1)+" "+deportesDisponibles.get(i).getNombreDeporte());
+                }
+                resp=input.nextInt();
+                input.nextLine();
+            }while(resp<1||resp>deportesDisponibles.size());
+            ModeloDeporte deporte=deportesDisponibles.get(resp-1);
+            List<ModeloEvento>eventosConFiltro=
+                    DaoEvento.conseguirPorOlimpiadaDeporte(olimpiada, deporte, db);
+            do {
+                System.out.println("Elige el evento");
+                for(int i=0;i<eventosConFiltro.size();i++) {
+                    System.out.println((i+1)+" "+eventosConFiltro.get(i).getNombreEvento());
+                }
+                resp=input.nextInt();
+                input.nextLine();
+            }while(resp<1||resp>eventosConFiltro.size());
+            ModeloEvento evento=eventosConFiltro.get(resp-1);
+            List<ModeloParticipacion> participaciones=
+                    DaoParticipacion.conseguirPorEvento(evento, db);
+            ArrayList<ModeloDeportista> deportistas=new ArrayList<ModeloDeportista>();
+            for(ModeloParticipacion par:participaciones) {
+                if(!deportistas.contains(par.getDeportista())) {
+                    deportistas.add(par.getDeportista());
+                }
+            }
+            for(int i=0;i<deportistas.size();i++) {
+                ModeloDeportista dep=deportistas.get(i);
+                ModeloParticipacion par=
+                        DaoParticipacion.conseguirPorDeportistaEvento(dep, evento, db);
+                System.out.println("Nombre: "+dep.getNombreDeportista()+", Altura: "+
+                        dep.getAltura()+", Peso: "+dep.getPeso()+", Edad: "+
+                        par.getEdad()+", Equipo: "+par.getEquipo().getNombreEquipo()+
+                        ", Medalla: "+par.getMedalla());
+            }
+        }
+
+    }
 }
