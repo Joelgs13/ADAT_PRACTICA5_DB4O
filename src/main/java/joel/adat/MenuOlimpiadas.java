@@ -13,14 +13,22 @@ import com.db4o.ObjectContainer;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 
-import com.db4o.ObjectContainer;
 import joel.adat.BBDD.ConexionDB;
 import joel.adat.DAO.*;
 import joel.adat.MODEL.*;
 
-import java.util.Scanner;
-
+/**
+ * Clase principal que representa el menú de opciones para gestionar los deportistas, participaciones y medallas en los eventos olímpicos.
+ * Utiliza la base de datos db4o para almacenar los datos.
+ */
 public class MenuOlimpiadas {
+
+    /**
+     * Metodo principal que ejecuta el menú interactivo para interactuar con los datos de los deportistas, participaciones y medallas.
+     * Pregunta al usuario si desea cargar los datos desde un archivo CSV y presenta las opciones para modificar los datos.
+     *
+     * @param args Los argumentos de línea de comandos.
+     */
     public static void main(String[] args) {
         ObjectContainer bbdd=new ConexionDB().getConnection();
         Scanner scanner = new Scanner(System.in);
@@ -77,7 +85,30 @@ public class MenuOlimpiadas {
 
     }
 
-
+    /**
+     * Carga datos desde un archivo CSV y los inserta en la base de datos si no existen previamente.
+     *
+     * Este metodo procesa cada línea del archivo CSV para crear o recuperar las entidades correspondientes
+     * (Deporte, Deportista, Equipo, Olimpiada, Evento, Participación) y las inserta en la base de datos
+     * usando los métodos del DAO correspondientes. Si una entidad ya existe en la base de datos (se busca por nombre),
+     * no se crea una nueva, sino que se utiliza la existente.
+     *
+     * El archivo CSV debe tener una estructura en la que los datos estén organizados en columnas como:
+     * [Deportista, Nombre, Apellido, Edad, ... , Deporte, Equipo, Olimpiada, Evento, Medalla, ...].
+     *
+     * Los siguientes pasos ocurren para cada línea del archivo:
+     * 1. Se busca o crea el `Deporte`.
+     * 2. Se busca o crea el `Deportista`.
+     * 3. Se busca o crea el `Equipo`.
+     * 4. Se busca o crea la `Olimpiada`.
+     * 5. Se busca o crea el `Evento`.
+     * 6. Se busca o crea la `Participación` y se asigna la medalla correspondiente.
+     *
+     * Finalmente, cada entidad es insertada en la base de datos si no existía previamente.
+     *
+     * @param ruta El archivo CSV que contiene los datos a cargar.
+     * @param db El objeto {@link ObjectContainer} que representa la base de datos donde se insertarán los datos.
+     */
     public static void cargarDatos(File ruta,ObjectContainer db) {
         try (CSVReader reader = new CSVReader(new FileReader(ruta))) {
             List<String[]> lineas = reader.readAll();
@@ -147,6 +178,16 @@ public class MenuOlimpiadas {
         }
     }
 
+    /**
+     * Carga el archivo CSV correspondiente al modelo de deporte especificado.
+     *
+     * Este metodo obtiene la ruta del archivo CSV que contiene los datos de los eventos atléticos,
+     * basándose en el nombre del deporte proporcionado. El archivo debe estar dentro de la carpeta de recursos
+     * del proyecto bajo la ruta `/csv/athlete_events-sort.csv`.
+     *
+     * @param modeloDeporte El modelo de deporte para el que se desea cargar el archivo CSV.
+     * @return El archivo {@link File} que contiene los datos CSV. Si ocurre un error, se retorna null.
+     */
     private static File cargarArchivo(ModeloDeporte modeloDeporte) {
         try {
             return new File(modeloDeporte.getClass().getResource("/csv/athlete_events-sort.csv").toURI());
@@ -156,6 +197,26 @@ public class MenuOlimpiadas {
         }
     }
 
+    /**
+     * Lista los deportistas participantes en un evento de una edición olímpica específica, filtrada por temporada y deporte.
+     *
+     * Este metodo permite al usuario:
+     * 1. Seleccionar una temporada olímpica (Invierno o Verano).
+     * 2. Seleccionar una edición olímpica dentro de la temporada elegida.
+     * 3. Seleccionar un deporte dentro de los eventos disponibles para la olimpiada seleccionada.
+     * 4. Listar los eventos disponibles para ese deporte en la olimpiada seleccionada.
+     * 5. Seleccionar un evento y mostrar los participantes en ese evento, incluyendo información como:
+     *    - Nombre del deportista.
+     *    - Altura y peso del deportista.
+     *    - Edad del deportista en el momento del evento.
+     *    - Nombre del equipo.
+     *    - Medalla obtenida (si la tiene).
+     *
+     * Si no se encuentran olimpiadas, eventos o participantes, el sistema muestra mensajes adecuados informando al usuario.
+     *
+     * @param scanner El objeto {@link Scanner} utilizado para leer la entrada del usuario.
+     * @param bbdd El objeto {@link ObjectContainer} que representa la base de datos de la aplicación.
+     */
     private static void listar(Scanner scanner, ObjectContainer bbdd) {
         int resp;
         String temporada = "Summer";
@@ -253,6 +314,22 @@ public class MenuOlimpiadas {
         }
     }
 
+    /**
+     * Modifica la medalla de participación de un deportista en un evento específico.
+     *
+     * Este metodo permite al usuario:
+     * 1. Buscar un deportista por nombre (o parte de él).
+     * 2. Seleccionar un deportista de los resultados encontrados.
+     * 3. Verificar las participaciones del deportista y elegir un evento de los disponibles.
+     * 4. Seleccionar una medalla (Oro, Plata, Bronce o Sin Medalla) para la participación en ese evento.
+     * 5. Actualizar la medalla del deportista para la participación seleccionada.
+     *
+     * Si no se encuentra al deportista, no hay eventos disponibles, o el usuario elige una opción no válida,
+     * el sistema muestra los mensajes adecuados y permite volver a intentarlo.
+     *
+     * @param scanner El objeto {@link Scanner} utilizado para leer la entrada del usuario.
+     * @param bbdd El objeto {@link ObjectContainer} que representa la base de datos de la aplicación.
+     */
     private static void modificar(Scanner scanner, ObjectContainer bbdd) {
         int resp = 0;
         List<ModeloDeportista> deportistas;
@@ -327,6 +404,25 @@ public class MenuOlimpiadas {
         System.out.println("Nueva Medalla: " + medalla);
     }
 
+
+    /**
+     * Añade una participación para un deportista en un evento de una olimpiada específica.
+     *
+     * Este metodo permite:
+     * 1. Buscar un deportista por nombre. Si no se encuentra, se crea un nuevo deportista.
+     * 2. Seleccionar la temporada (Verano o Invierno).
+     * 3. Elegir una olimpiada de la temporada seleccionada.
+     * 4. Elegir un deporte de los disponibles en la olimpiada.
+     * 5. Seleccionar el evento del deporte elegido.
+     * 6. Añadir la participación del deportista en el evento seleccionado.
+     *
+     * Si alguno de estos pasos falla (por ejemplo, no hay eventos disponibles), se muestra un mensaje
+     * adecuado informando al usuario.
+     *
+     * @param scanner El objeto {@link Scanner} que se utiliza para leer la entrada del usuario.
+     * @param bbdd El objeto {@link ObjectContainer} que representa la base de datos donde se almacenan
+     *             los deportistas, olimpiadas, deportes y eventos.
+     */
     private static void aniadir(Scanner scanner, ObjectContainer bbdd) {
         int resp = 0;
         List<ModeloDeportista> deportistas = null;
@@ -372,6 +468,12 @@ public class MenuOlimpiadas {
         }
     }
 
+    /**
+     * Solicita al usuario seleccionar una temporada entre invierno y verano.
+     *
+     * @param scanner El objeto {@link Scanner} utilizado para leer la entrada del usuario.
+     * @return La temporada seleccionada como una cadena de texto ("Winter" o "Summer").
+     */
     private static String seleccionarTemporada(Scanner scanner) {
         int resp;
         String temporada = "Summer";
@@ -392,6 +494,14 @@ public class MenuOlimpiadas {
         return temporada;
     }
 
+    /**
+     * Solicita al usuario seleccionar una olimpiada en base a la temporada seleccionada.
+     *
+     * @param temporada La temporada seleccionada por el usuario (Winter o Summer).
+     * @param db La base de datos que contiene las olimpiadas.
+     * @param input El objeto {@link Scanner} para leer la entrada del usuario.
+     * @return La olimpiada seleccionada por el usuario o null si no se encuentran olimpiadas.
+     */
     private static ModeloOlimpiada seleccionarOlimpiada(String temporada, ObjectContainer db, Scanner input) {
         int resp;
         List<ModeloOlimpiada> olimpiadas = DaoOlimpiada.conseguirPorTemporada(temporada, db);
@@ -415,6 +525,14 @@ public class MenuOlimpiadas {
         return olimpiadas.get(resp - 1);
     }
 
+    /**
+     * Solicita al usuario seleccionar un evento en una olimpiada específica, filtrando por deporte.
+     *
+     * @param olimpiada La olimpiada seleccionada por el usuario.
+     * @param bbdd La base de datos que contiene los eventos y deportes.
+     * @param scanner El objeto {@link Scanner} utilizado para leer la entrada del usuario.
+     * @return El evento seleccionado por el usuario o null si no hay eventos disponibles.
+     */
     private static ModeloEvento seleccionarEvento(ModeloOlimpiada olimpiada, ObjectContainer bbdd, Scanner scanner) {
         int resp;
         List<ModeloEvento> eventos = DaoEvento.conseguirPorOlimpiada(olimpiada, bbdd);
@@ -455,6 +573,12 @@ public class MenuOlimpiadas {
         return eventosConFiltro.get(resp - 1);
     }
 
+    /**
+     * Filtra los eventos de una olimpiada para obtener solo los deportes disponibles.
+     *
+     * @param eventos Lista de eventos de la olimpiada seleccionada.
+     * @return Lista de deportes disponibles en la olimpiada seleccionada.
+     */
     private static List<ModeloDeporte> obtenerDeportesDisponibles(List<ModeloEvento> eventos) {
         List<ModeloDeporte> deportesDisponibles = new ArrayList<>();
         for (ModeloEvento e : eventos) {
@@ -465,6 +589,27 @@ public class MenuOlimpiadas {
         return deportesDisponibles;
     }
 
+
+    /**
+     * Elimina una participación de un deportista en un evento específico.
+     *
+     * Este metodo permite al usuario buscar un deportista por nombre, seleccionar
+     * un deportista de los encontrados, luego elegir una de sus participaciones
+     * y, finalmente, eliminar dicha participación de la base de datos.
+     *
+     * El flujo del proceso es el siguiente:
+     * 1. Se solicita al usuario que ingrese el nombre del deportista.
+     * 2. Si el deportista existe, se presenta una lista de sus participaciones.
+     * 3. El usuario selecciona la participación que desea eliminar.
+     * 4. Se elimina la participación seleccionada de la base de datos.
+     *
+     * Si el deportista no tiene participaciones registradas o no se encuentra en la base de datos,
+     * el proceso se detiene con un mensaje informativo.
+     *
+     * @param scanner El objeto {@link Scanner} que se utiliza para leer la entrada del usuario.
+     * @param bbdd El objeto {@link ObjectContainer} que representa la base de datos donde se almacenan
+     *              los deportistas, participaciones y eventos.
+     */
     private static void eliminar(Scanner scanner, ObjectContainer bbdd) {
         int resp = 0;
         List<ModeloDeportista> deportistas = null;
@@ -511,7 +656,6 @@ public class MenuOlimpiadas {
 
         System.out.println("\n Participación eliminada correctamente.");
     }
-
 
 
 }
