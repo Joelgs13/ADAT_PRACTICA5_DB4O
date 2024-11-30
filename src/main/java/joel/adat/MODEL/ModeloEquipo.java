@@ -9,6 +9,14 @@ public class ModeloEquipo {
 	private String nombreEquipo;
 	private String iniciales;
 
+	public ModeloEquipo() {
+
+	}
+
+	public void setNombreEquipo(String nombreEquipo) {
+		this.nombreEquipo = nombreEquipo;
+	}
+
 	/**
 	 * Constructor que inicializa el equipo con su nombre e iniciales.
 	 * 

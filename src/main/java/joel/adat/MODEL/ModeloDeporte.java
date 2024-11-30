@@ -15,6 +15,9 @@ public class ModeloDeporte {
 
 	}
 
+	public void setNombreDeporte(String nombreDeporte) {
+		this.nombreDeporte = nombreDeporte;
+	}
 
 	public String getNombreDeporte() {
 		return nombreDeporte;

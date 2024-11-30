@@ -7,8 +7,16 @@ public class ModeloDeportista {
 	
 	private String nombreDeportista;
 	private char sexo;
-	private int altura;
+	private float altura;
 	private float peso;
+
+	public ModeloDeportista() {
+
+	}
+
+	public void setNombreDeportista(String nombreDeportista) {
+		this.nombreDeportista = nombreDeportista;
+	}
 
 	/**
 	 * Constructor que inicializa los atributos de un deportista.
@@ -18,7 +26,7 @@ public class ModeloDeportista {
 	 * @param altura La altura del deportista en centímetros.
 	 * @param peso El peso del deportista en kilogramos.
 	 */
-	public ModeloDeportista(String nombreDeportista, char sexo, int altura, float peso) {
+	public ModeloDeportista(String nombreDeportista, char sexo, float altura, float peso) {
 		this.nombreDeportista = nombreDeportista;
 		this.sexo = sexo;
 		this.altura = altura;
@@ -48,7 +56,7 @@ public class ModeloDeportista {
 	 * 
 	 * @return La altura del deportista en centímetros.
 	 */
-	public int getAltura() {
+	public float getAltura() {
 		return altura;
 	}
 

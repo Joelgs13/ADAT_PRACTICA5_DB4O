@@ -10,8 +10,25 @@ public class ModeloParticipacion {
 	private ModeloEvento evento;
 	private ModeloEquipo equipo;
 	private int edad;
+
+	public ModeloParticipacion() {
+
+	}
+
+	public void setMedalla(String medalla) {
+		this.medalla = medalla;
+	}
+
+	public void setEvento(ModeloEvento evento) {
+		this.evento = evento;
+	}
+
 	private String medalla;
-	
+
+	public void setDeportista(ModeloDeportista deportista) {
+		this.deportista = deportista;
+	}
+
 	/**
 	 * Constructor que inicializa la participación de un deportista en un evento.
 	 * 

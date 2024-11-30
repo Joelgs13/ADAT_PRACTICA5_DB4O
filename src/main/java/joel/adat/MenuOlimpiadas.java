@@ -15,6 +15,7 @@ import com.opencsv.exceptions.CsvException;
 
 import com.db4o.ObjectContainer;
 import joel.adat.BBDD.ConexionDB;
+import joel.adat.DAO.*;
 import joel.adat.MODEL.*;
 
 import java.util.Scanner;
@@ -59,11 +60,11 @@ public class MenuOlimpiadas {
             List<String[]> lineas = reader.readAll();
             lineas.remove(0); // Remover cabecera
             for (String[] linea : lineas) {
-                ModeloDeporte deporte=DaoDeporte.conseguirPorNombre(linea[12],db);
+                ModeloDeporte deporte= DaoDeporte.conseguirPorNombre(linea[12],db);
                 if(deporte==null) {
                     deporte=new ModeloDeporte(linea[12]);
                 }
-                ModeloDeportista deportista=DaoDeportista.conseguirPorNombre(linea[1], db);
+                ModeloDeportista deportista= DaoDeportista.conseguirPorNombre(linea[1], db);
                 if(deportista==null) {
                     float f;
                     try {
@@ -79,11 +80,11 @@ public class MenuOlimpiadas {
                     }
                     deportista=new ModeloDeportista(linea[1],linea[2].charAt(0), f, i);
                 }
-                ModeloEquipo equipo=DaoEquipo.conseguirPorNombre(linea[6], db);
+                ModeloEquipo equipo= DaoEquipo.conseguirPorNombre(linea[6], db);
                 if(equipo==null) {
                     equipo=new ModeloEquipo(linea[6], linea[7]);
                 }
-                ModeloOlimpiada olimpiada=DaoOlimpiada.conseguirPorNombre(linea[8], db);
+                ModeloOlimpiada olimpiada= DaoOlimpiada.conseguirPorNombre(linea[8], db);
                 if(olimpiada==null) {
                     int i;
                     try {
@@ -93,9 +94,9 @@ public class MenuOlimpiadas {
                     }
                     olimpiada=new ModeloOlimpiada(linea[8],i,linea[10],linea[11]);
                 }
-                ModeloEvento evento=DaoEvento.conseguirPorNombre(linea[13], db);
+                ModeloEvento evento= DaoEvento.conseguirPorNombre(linea[13], db);
                 if(evento==null) {
-                    evento=new ModeloEvento(linea[13], olimpiada, deporte);
+                    evento=new ModeloEvento(linea[13], deporte, olimpiada);
                 }
                 ModeloParticipacion participacion=DaoParticipacion.conseguirPorDeportistaEvento(deportista, evento, db);
                 if(participacion==null) {

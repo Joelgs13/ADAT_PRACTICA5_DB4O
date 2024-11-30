@@ -10,6 +10,15 @@ public class ModeloOlimpiada {
 	private String nombreOlimpiada;
 	private int anio;
 	private String temporada;
+
+	public ModeloOlimpiada() {
+
+	}
+
+	public void setNombreOlimpiada(String nombreOlimpiada) {
+		this.nombreOlimpiada = nombreOlimpiada;
+	}
+
 	private String ciudad;
 	
 	/**

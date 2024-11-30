@@ -10,6 +10,15 @@ import java.util.Objects;
 public class ModeloEvento {
 
 	private String nombreEvento;
+
+	public ModeloEvento() {
+
+	}
+
+	public void setNombreEvento(String nombreEvento) {
+		this.nombreEvento = nombreEvento;
+	}
+
 	private ModeloDeporte deporte;
 	private ModeloOlimpiada olimpiada;
 
