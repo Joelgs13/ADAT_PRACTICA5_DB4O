@@ -152,75 +152,101 @@ public class MenuOlimpiadas {
         }
     }
 
-    private static void listar(Scanner input, ObjectContainer db) {
-        int resp=0;
-        String temporada="Summer";
+    private static void listar(Scanner scanner, ObjectContainer bbdd) {
+        int resp;
+        String temporada = "Summer";
+
+        System.out.println("Selecciona la temporada olimpica:");
+        System.out.println("1. Winter");
+        System.out.println("2. Summer");
         do {
-            System.out.println("Dime la temporada:\n1 Winter\n2 Summer");
-            resp=input.nextInt();
-            input.nextLine();
-        }while(resp!=1&&resp!=2);
-        if(resp==1) {
-            temporada="Winter";
+            System.out.print("Tu elección: ");
+            resp = scanner.nextInt();
+            scanner.nextLine();
+        } while (resp != 1 && resp != 2);
+
+        if (resp == 1) {
+            temporada = "Winter";
         }
-        List<ModeloOlimpiada> olimpiadas=DaoOlimpiada.conseguirPorTemporada(temporada, db);
+
+        List<ModeloOlimpiada> olimpiadas = DaoOlimpiada.conseguirPorTemporada(temporada, bbdd);
+        if (olimpiadas.isEmpty()) {
+            System.out.println("No se encontraron olimpiadas para la temporada seleccionada.");
+            return;
+        }
+
+        System.out.println("\nEdiciones olímpicas:");
+        for (int i = 0; i < olimpiadas.size(); i++) {
+            System.out.printf("%d. %s\n", i + 1, olimpiadas.get(i).getNombreOlimpiada());
+        }
+
         do {
-            System.out.println("Elige la edición olímpica:");
-            for(int i=0;i<olimpiadas.size();i++) {
-                System.out.println((i+1)+" "+olimpiadas.get(i).getNombreOlimpiada());
-            }
-            resp=input.nextInt();
-            input.nextLine();
-        }while(resp<1||resp>olimpiadas.size());
-        ModeloOlimpiada olimpiada=olimpiadas.get(resp-1);
-        List<ModeloEvento> eventos=DaoEvento.conseguirPorOlimpiada(olimpiada, db);
-        if(eventos.size()==0) {
-            System.out.println("No hay deportes en esa olimpiada");
-        }else {
-            ArrayList<ModeloDeporte> deportesDisponibles=new ArrayList<ModeloDeporte>();
-            for(ModeloEvento e:eventos) {
-                if(!deportesDisponibles.contains(e.getDeporte())) {
-                    deportesDisponibles.add(e.getDeporte());
-                }
-            }
-            do {
-                System.out.println("Elige el deporte");
-                for(int i=0;i<deportesDisponibles.size();i++) {
-                    System.out.println((i+1)+" "+deportesDisponibles.get(i).getNombreDeporte());
-                }
-                resp=input.nextInt();
-                input.nextLine();
-            }while(resp<1||resp>deportesDisponibles.size());
-            ModeloDeporte deporte=deportesDisponibles.get(resp-1);
-            List<ModeloEvento>eventosConFiltro=
-                    DaoEvento.conseguirPorOlimpiadaDeporte(olimpiada, deporte, db);
-            do {
-                System.out.println("Elige el evento");
-                for(int i=0;i<eventosConFiltro.size();i++) {
-                    System.out.println((i+1)+" "+eventosConFiltro.get(i).getNombreEvento());
-                }
-                resp=input.nextInt();
-                input.nextLine();
-            }while(resp<1||resp>eventosConFiltro.size());
-            ModeloEvento evento=eventosConFiltro.get(resp-1);
-            List<ModeloParticipacion> participaciones=
-                    DaoParticipacion.conseguirPorEvento(evento, db);
-            ArrayList<ModeloDeportista> deportistas=new ArrayList<ModeloDeportista>();
-            for(ModeloParticipacion par:participaciones) {
-                if(!deportistas.contains(par.getDeportista())) {
-                    deportistas.add(par.getDeportista());
-                }
-            }
-            for(int i=0;i<deportistas.size();i++) {
-                ModeloDeportista dep=deportistas.get(i);
-                ModeloParticipacion par=
-                        DaoParticipacion.conseguirPorDeportistaEvento(dep, evento, db);
-                System.out.println("Nombre: "+dep.getNombreDeportista()+", Altura: "+
-                        dep.getAltura()+", Peso: "+dep.getPeso()+", Edad: "+
-                        par.getEdad()+", Equipo: "+par.getEquipo().getNombreEquipo()+
-                        ", Medalla: "+par.getMedalla());
+            System.out.print("Selecciona una edición olímpica de las anteriores: ");
+            resp = scanner.nextInt();
+            scanner.nextLine();
+        } while (resp < 1 || resp > olimpiadas.size());
+
+        ModeloOlimpiada olimpiada = olimpiadas.get(resp - 1);
+        List<ModeloEvento> eventos = DaoEvento.conseguirPorOlimpiada(olimpiada, bbdd);
+
+        if (eventos.isEmpty()) {
+            System.out.println("No hay eventos disponibles para esta olimpiada.");
+            return;
+        }
+
+        List<ModeloDeporte> deportesDisponibles = new ArrayList<>();
+        for (ModeloEvento e : eventos) {
+            if (!deportesDisponibles.contains(e.getDeporte())) {
+                deportesDisponibles.add(e.getDeporte());
             }
         }
 
+        System.out.println("\nDeportes disponibles:");
+        for (int i = 0; i < deportesDisponibles.size(); i++) {
+            System.out.printf("%d. %s\n", i + 1, deportesDisponibles.get(i).getNombreDeporte());
+        }
+
+        do {
+            System.out.print("Selecciona un deporte de los anteriores: ");
+            resp = scanner.nextInt();
+            scanner.nextLine();
+        } while (resp < 1 || resp > deportesDisponibles.size());
+
+        ModeloDeporte deporte = deportesDisponibles.get(resp - 1);
+        List<ModeloEvento> eventosConFiltro = DaoEvento.conseguirPorOlimpiadaDeporte(olimpiada, deporte, bbdd);
+
+        System.out.println("\nEventos disponibles:");
+        for (int i = 0; i < eventosConFiltro.size(); i++) {
+            System.out.printf("%d. %s\n", i + 1, eventosConFiltro.get(i).getNombreEvento());
+        }
+
+        do {
+            System.out.print("Selecciona un evento de los anteriores: ");
+            resp = scanner.nextInt();
+            scanner.nextLine();
+        } while (resp < 1 || resp > eventosConFiltro.size());
+
+        ModeloEvento evento = eventosConFiltro.get(resp - 1);
+        List<ModeloParticipacion> participaciones = DaoParticipacion.conseguirPorEvento(evento, bbdd);
+
+        if (participaciones.isEmpty()) {
+            System.out.println("No hay participantes en este evento.");
+            return;
+        }
+
+        System.out.println("\nParticipantes:");
+        for (ModeloParticipacion par : participaciones) {
+            ModeloDeportista dep = par.getDeportista();
+            System.out.printf(
+                    "Nombre: %s | Altura: %.2f m | Peso: %.2f kg | Edad: %d años | Equipo: %s | Medalla: %s\n",
+                    dep.getNombreDeportista(),
+                    dep.getAltura(),
+                    dep.getPeso(),
+                    par.getEdad(),
+                    par.getEquipo().getNombreEquipo(),
+                    par.getMedalla() != null ? par.getMedalla() : "Sin medalla"
+            );
+        }
     }
+
 }
