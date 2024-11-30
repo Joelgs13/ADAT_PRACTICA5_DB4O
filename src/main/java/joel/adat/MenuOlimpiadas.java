@@ -57,10 +57,13 @@ public class MenuOlimpiadas {
                     listar(scanner,bbdd);
                     break;
                 case 2:
+                    modificar(scanner,bbdd);
                     break;
                 case 3:
+                    aniadir(scanner,bbdd);
                     break;
                 case 4:
+                    //eliminar(scanner,bbdd);
                     break;
                 case 0:
                     System.out.print("Terminando programa");
@@ -73,6 +76,7 @@ public class MenuOlimpiadas {
 
 
     }
+
 
     public static void cargarDatos(File ruta,ObjectContainer db) {
         try (CSVReader reader = new CSVReader(new FileReader(ruta))) {
@@ -248,5 +252,218 @@ public class MenuOlimpiadas {
             );
         }
     }
+
+    private static void modificar(Scanner scanner, ObjectContainer bbdd) {
+        int resp = 0;
+        List<ModeloDeportista> deportistas;
+
+        System.out.println("=== Modificar Medalla de Participación ===");
+
+        do {
+            System.out.print("Introduce el nombre o parte del nombre del deportista: ");
+            String nombre = scanner.nextLine();
+            deportistas = DaoDeportista.conseguirPorFragmentoNombre(nombre, bbdd);
+
+            if (deportistas == null || deportistas.isEmpty()) {
+                System.out.println(" No se encontraron deportistas con ese nombre. Inténtalo de nuevo.");
+            } else {
+                System.out.println("\nDeportistas encontrados:");
+                for (int i = 0; i < deportistas.size(); i++) {
+                    System.out.println((i + 1) + ". " + deportistas.get(i).getNombreDeportista());
+                }
+                System.out.print("Selecciona el número del deportista: ");
+                resp = scanner.nextInt();
+                scanner.nextLine(); // Limpiar buffer
+            }
+        } while (resp < 1 || resp > (deportistas == null ? 0 : deportistas.size()));
+
+        ModeloDeportista deportista = deportistas.get(resp - 1);
+        List<ModeloParticipacion> participaciones = DaoParticipacion.conseguirPorDeportista(deportista, bbdd);
+        ArrayList<ModeloEvento> eventos = new ArrayList<>();
+
+        for (ModeloParticipacion p : participaciones) {
+            if (!eventos.contains(p.getEvento())) {
+                eventos.add(p.getEvento());
+            }
+        }
+
+        System.out.println("\n=== Selección de Evento ===");
+        do {
+            System.out.println("Eventos disponibles:");
+            for (int i = 0; i < eventos.size(); i++) {
+                System.out.println((i + 1) + ". " + eventos.get(i).getNombreEvento());
+            }
+            System.out.print("Elige el número del evento: ");
+            resp = scanner.nextInt();
+            scanner.nextLine(); // Limpiar buffer
+        } while (resp < 1 || resp > eventos.size());
+
+        ModeloEvento evento = eventos.get(resp - 1);
+
+        System.out.println("\n=== Selección de Medalla ===");
+        do {
+            System.out.println("Opciones disponibles:");
+            System.out.println("1.  Oro (Gold)");
+            System.out.println("2.  Plata (Silver)");
+            System.out.println("3.  Bronce (Bronze)");
+            System.out.println("4. Sin Medalla (NA)");
+            System.out.print("Selecciona la medalla: ");
+            resp = scanner.nextInt();
+            scanner.nextLine(); // Limpiar buffer
+        } while (resp < 1 || resp > 4);
+
+        String medalla = switch (resp) {
+            case 1 -> "Gold";
+            case 2 -> "Silver";
+            case 3 -> "Bronze";
+            default -> "NA";
+        };
+
+        DaoParticipacion.actualizarMedallas(medalla, deportista, evento, bbdd);
+
+        System.out.println("\n Medalla actualizada correctamente:");
+        System.out.println("Deportista: " + deportista.getNombreDeportista());
+        System.out.println("Evento: " + evento.getNombreEvento());
+        System.out.println("Nueva Medalla: " + medalla);
+    }
+
+    private static void aniadir(Scanner scanner, ObjectContainer bbdd) {
+        int resp = 0;
+        List<ModeloDeportista> deportistas = null;
+        boolean nuevoDeportista = false;
+        ModeloDeportista deportista = null;
+
+        do {
+            System.out.println("Introduce el nombre del deportista a buscar:");
+            String nombre = scanner.nextLine();
+            deportistas = DaoDeportista.conseguirPorFragmentoNombre(nombre, bbdd);
+
+            if (deportistas == null || deportistas.isEmpty()) {
+                System.out.println("No se encontró al deportista, creando uno nuevo...");
+                deportista = new ModeloDeportista();
+                deportista.setNombreDeportista(nombre);
+                DaoDeportista.insertar(deportista, bbdd);
+                nuevoDeportista = true;
+            } else {
+                System.out.println("\nDeportistas encontrados:");
+                for (int i = 0; i < deportistas.size(); i++) {
+                    System.out.printf("%d. %s\n", i + 1, deportistas.get(i).getNombreDeportista());
+                }
+                System.out.print("Selecciona el número del deportista: ");
+                resp = scanner.nextInt();
+                scanner.nextLine();
+            }
+        } while ((resp < 1 || resp > deportistas.size()) && !nuevoDeportista);
+
+        if (!nuevoDeportista) {
+            deportista = deportistas.get(resp - 1);
+        }
+
+        String temporada = seleccionarTemporada(scanner);
+        ModeloOlimpiada olimpiada = seleccionarOlimpiada(temporada, bbdd, scanner);
+        ModeloEvento evento = seleccionarEvento(olimpiada, bbdd, scanner);
+
+        if (evento != null) {
+            DaoParticipacion.insertar(new ModeloParticipacion(deportista, evento,
+                    new ModeloEquipo("EjemploEquipo", "EEE"), 0, temporada), bbdd);
+            System.out.println("\n Participación añadida exitosamente.");
+        } else {
+            System.out.println("\n No se ha podido añadir la participación, ya que no hay eventos disponibles.");
+        }
+    }
+
+    private static String seleccionarTemporada(Scanner scanner) {
+        int resp;
+        String temporada = "Summer";
+
+        do {
+            System.out.println("\nSelecciona la temporada:");
+            System.out.println("1. Invierno (Winter)");
+            System.out.println("2. Verano (Summer)");
+            System.out.print("Tu elección: ");
+            resp = scanner.nextInt();
+            scanner.nextLine();
+        } while (resp != 1 && resp != 2);
+
+        if (resp == 1) {
+            temporada = "Winter";
+        }
+
+        return temporada;
+    }
+
+    private static ModeloOlimpiada seleccionarOlimpiada(String temporada, ObjectContainer db, Scanner input) {
+        int resp;
+        List<ModeloOlimpiada> olimpiadas = DaoOlimpiada.conseguirPorTemporada(temporada, db);
+
+        if (olimpiadas.isEmpty()) {
+            System.out.println("⚠️ No se encontraron olimpiadas para la temporada " + temporada);
+            return null;
+        }
+
+        System.out.println("\nElige la edición olímpica:");
+        for (int i = 0; i < olimpiadas.size(); i++) {
+            System.out.printf("%d. %s\n", i + 1, olimpiadas.get(i).getNombreOlimpiada());
+        }
+
+        do {
+            System.out.print("Tu elección: ");
+            resp = input.nextInt();
+            input.nextLine();
+        } while (resp < 1 || resp > olimpiadas.size());
+
+        return olimpiadas.get(resp - 1);
+    }
+
+    private static ModeloEvento seleccionarEvento(ModeloOlimpiada olimpiada, ObjectContainer bbdd, Scanner scanner) {
+        int resp;
+        List<ModeloEvento> eventos = DaoEvento.conseguirPorOlimpiada(olimpiada, bbdd);
+
+        if (eventos.isEmpty()) {
+            System.out.println("⚠️ No hay eventos disponibles para esta olimpiada.");
+            return null;
+        }
+
+        List<ModeloDeporte> deportesDisponibles = obtenerDeportesDisponibles(eventos);
+
+        System.out.println("\nSelecciona el deporte:");
+        for (int i = 0; i < deportesDisponibles.size(); i++) {
+            System.out.printf("%d. %s\n", i + 1, deportesDisponibles.get(i).getNombreDeporte());
+        }
+
+        do {
+            System.out.print("Tu elección: ");
+            resp = scanner.nextInt();
+            scanner.nextLine();
+        } while (resp < 1 || resp > deportesDisponibles.size());
+
+        ModeloDeporte deporte = deportesDisponibles.get(resp - 1);
+
+        List<ModeloEvento> eventosConFiltro = DaoEvento.conseguirPorOlimpiadaDeporte(olimpiada, deporte, bbdd);
+
+        System.out.println("\nSelecciona el evento:");
+        for (int i = 0; i < eventosConFiltro.size(); i++) {
+            System.out.printf("%d. %s\n", i + 1, eventosConFiltro.get(i).getNombreEvento());
+        }
+
+        do {
+            System.out.print("Tu elección: ");
+            resp = scanner.nextInt();
+            scanner.nextLine();
+        } while (resp < 1 || resp > eventosConFiltro.size());
+
+        return eventosConFiltro.get(resp - 1);
+    }
+
+    private static List<ModeloDeporte> obtenerDeportesDisponibles(List<ModeloEvento> eventos) {
+        List<ModeloDeporte> deportesDisponibles = new ArrayList<>();
+        for (ModeloEvento e : eventos) {
+            if (!deportesDisponibles.contains(e.getDeporte())) {
+                deportesDisponibles.add(e.getDeporte());
+            }
+        }
+        return deportesDisponibles;
+    }
+
 
 }
