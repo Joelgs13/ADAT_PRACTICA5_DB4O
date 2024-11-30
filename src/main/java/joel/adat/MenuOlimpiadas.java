@@ -63,7 +63,7 @@ public class MenuOlimpiadas {
                     aniadir(scanner,bbdd);
                     break;
                 case 4:
-                    //eliminar(scanner,bbdd);
+                    eliminar(scanner,bbdd);
                     break;
                 case 0:
                     System.out.print("Terminando programa");
@@ -397,7 +397,7 @@ public class MenuOlimpiadas {
         List<ModeloOlimpiada> olimpiadas = DaoOlimpiada.conseguirPorTemporada(temporada, db);
 
         if (olimpiadas.isEmpty()) {
-            System.out.println("⚠️ No se encontraron olimpiadas para la temporada " + temporada);
+            System.out.println(" No se encontraron olimpiadas para la temporada " + temporada);
             return null;
         }
 
@@ -420,7 +420,7 @@ public class MenuOlimpiadas {
         List<ModeloEvento> eventos = DaoEvento.conseguirPorOlimpiada(olimpiada, bbdd);
 
         if (eventos.isEmpty()) {
-            System.out.println("⚠️ No hay eventos disponibles para esta olimpiada.");
+            System.out.println(" No hay eventos disponibles para esta olimpiada.");
             return null;
         }
 
@@ -464,6 +464,54 @@ public class MenuOlimpiadas {
         }
         return deportesDisponibles;
     }
+
+    private static void eliminar(Scanner scanner, ObjectContainer bbdd) {
+        int resp = 0;
+        List<ModeloDeportista> deportistas = null;
+
+        do {
+            System.out.println("Introduce el nombre del deportista a buscar:");
+            String nombre = scanner.nextLine();
+            deportistas = DaoDeportista.conseguirPorFragmentoNombre(nombre, bbdd);
+
+            if (deportistas == null || deportistas.isEmpty()) {
+                System.out.println(" No se encontraron deportistas con ese nombre.");
+            } else {
+                System.out.println("\nDeportistas encontrados:");
+                for (int i = 0; i < deportistas.size(); i++) {
+                    System.out.printf("%d. %s\n", i + 1, deportistas.get(i).getNombreDeportista());
+                }
+                System.out.print("Selecciona el número del deportista: ");
+                resp = scanner.nextInt();
+                scanner.nextLine(); // Limpiar buffer
+            }
+        } while (resp < 1 || resp > deportistas.size());
+
+        ModeloDeportista deportista = deportistas.get(resp - 1);
+        List<ModeloParticipacion> participaciones = DaoParticipacion.conseguirPorDeportista(deportista, bbdd);
+
+        if (participaciones.isEmpty()) {
+            System.out.println(" El deportista seleccionado no tiene participaciones registradas.");
+            return;
+        }
+
+        System.out.println("\nSelecciona la participación que deseas eliminar:");
+        for (int i = 0; i < participaciones.size(); i++) {
+            System.out.printf("%d. %s\n", i + 1, participaciones.get(i).getEvento().getNombreEvento());
+        }
+
+        do {
+            System.out.print("Tu elección: ");
+            resp = scanner.nextInt();
+            scanner.nextLine(); // Limpiar buffer
+        } while (resp < 1 || resp > participaciones.size());
+
+        ModeloParticipacion participacionSeleccionada = participaciones.get(resp - 1);
+        DaoParticipacion.eliminar(deportista, participacionSeleccionada.getEvento(), bbdd);
+
+        System.out.println("\n Participación eliminada correctamente.");
+    }
+
 
 
 }
